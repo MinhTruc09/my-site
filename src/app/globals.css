@@ -61,6 +61,20 @@
 
   /* Motion: mechanical slides, no spring */
   --ease-press: cubic-bezier(0.7, 0, 0.2, 1);
+
+  /* Works carousel: the amber interval bar filling the cyan band */
+  @keyframes works-progress {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  /* Misregistration jitter: the label jumps 2px for one 120ms beat (DESIGN.md › Buttons) */
+  --animate-jitter: jitter 120ms steps(2) 1;
+  @keyframes jitter {
+    0% { transform: translate(0, 0); }
+    50% { transform: translate(2px, -1px); }
+    100% { transform: translate(0, 0); }
+  }
 }
 
 /* shadcn semantic tokens, mapped onto the brand inks */

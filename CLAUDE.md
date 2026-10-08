@@ -58,9 +58,10 @@ art/  design-refs/    # third-party moodboard: gitignored, never ship
 ```
 Planned conventions (follow them when creating files):
 - `src/components/sections/`: one file per poster section (`hero.tsx`, `works.tsx`, `experience.tsx`, `skills.tsx`, `about.tsx`, `contact.tsx`), in DESIGN.md's section order.
-- `src/components/brand/`: signature pieces (`swatch-band`, `track-list-tabs`, `terminal-panel`, `hanko-seal`, `phone-frame`, `placeholder-frame`, `ref-image`).
+- `src/components/brand/` (built, test page `/lab/brand`): `SwatchBand`, `TrackListTabs`, `TerminalPanel`, `HankoSeal` (`MinhTruc09`), `PhoneFrame`, `PlaceholderFrame`, `RefImage`, `JpLabel` (Japanese as SVG outlines from the generated `jp-glyphs.ts`), plus the global `Cursor` and `GrainOverlay`. Reuse these before writing new markup.
+- `src/lib/palette.ts`: hex codes and label-contrast rule per ink, for components that print hex as typography. Keep it in sync with the `@theme` tokens.
 - `src/components/motion/`: GSAP and Lenis client wrappers.
-- `src/content/profile.ts`: **the single typed source for all CV content** (projects, experience, skills, certifications, links). Components never hard-code CV facts.
+- `src/content/profile.ts` (built): **the single typed source for all CV content** (projects newest first as `PRJ-01…04`, experience, education, certifications, skills, contacts incl. phone, `cv: null` until the redacted PDF exists, `screenshots: null` per project until real captures exist). Components never hard-code CV facts; `formatPeriod()` prints dates as in the CV.
 - Server Components by default. Add `"use client"` only to the smallest component that needs state, effects, GSAP, Lenis, canvas or WebGL.
 
 ## Styling rules
@@ -97,16 +98,24 @@ Planned conventions (follow them when creating files):
 ## Content and honesty
 - **All content comes from PRODUCT.md › Evidence on Hand** (from the CV). Never invent projects, metrics, testimonials, clients, app-store links, dates or skills.
 - Where something is missing, use the **placeholder frame** (`[ SCREENSHOT PENDING ]` / `[ IMAGE PENDING ]`).
-- **Personal data:** publish only email, GitHub and LinkedIn. Phone, birth date and gender stay off the site until the owner confirms.
+- **Personal data:** the owner approved publishing **email, GitHub, LinkedIn and phone** (2026-10-08). The **birth year (2004)** may be shown (hero ticket stub, owner request); the full birth date and gender never go on the site. Render the phone as a `tel:` link in international format (`+84 …`) from `profile.ts`; do not repeat it in metadata, OG images or JSON-LD.
 - **Moodboard images** in `art/` and `design-refs/` are third-party works. They are gitignored and may be used only as temporary dev placeholders: copy them to `public/ref/` (gitignored), render them through `RefImage` (house treatment + `REF · TEMP` tag + fallback). They are never presented as the owner's work and never used as fake app screenshots.
 - **Pre-launch gate:** no `RefImage` on any route, and `public/ref/` empty.
-- `NguyenMinhTruc_CV_MobileDeveloperIntern.pdf` contains phone and birth date and is **not gitignored**. Do not commit it or link it publicly until the owner decides. A public CV should be a redacted copy.
+- `NguyenMinhTruc_CV_MobileDeveloperIntern.pdf` contains the birth date and is gitignored (`NguyenMinhTruc_CV_*.pdf`). Never link it publicly. The `DOWNLOAD CV` button points to a **redacted copy** (birth date and gender removed) at `public/cv-nguyen-minh-truc.pdf`, only once the owner provides it; until then the button shows the placeholder state.
+
+## Decisions (confirmed by the owner, 2026-10-08)
+1. **Language: English.** `<html lang="en">`. The name keeps full Vietnamese diacritics in a `lang="vi"` element; Japanese only for the fixed bilingual labels.
+2. **Contacts: email, GitHub, LinkedIn, phone** (see Personal data).
+3. **Hanko seal: `MinhTruc09`** in Latin (Archivo, stacked inside the circle). No kanji on the seal.
+4. **Japanese labels: SVG outlines** (作品 WORKS, 概要 ABOUT, 技術 SKILLS, 連絡 CONTACT) with the Latin twin as the accessible text. No Japanese webfont is loaded.
+5. **Home page direction: A "Print Run"** (poster stack on cream). Order: **Hero → 作品 Works → 技術 Skills → 概要 About → 連絡 Contact**. Skills is its own section, each skill linked to the projects that used it.
+6. **Hero subject: a rotating 3D phone** (react-three-fiber, built in code: **rounded like the real device** — owner override of the 0-radius rule for this object only — with Dynamic Island, camera plateau and side buttons; three-step toon + halftone in palette inks, never photoreal; screen = a real app screenshot from `profile.ts`, otherwise a **mini poster of the app** (code, name, stack, sun over a halftone slab, swatch band, `[ SCREENSHOT PENDING ]`) drawn at 1080×2340 with mipmaps). **Hero background: `HalftoneField`** (`src/components/art/halftone/`), a full-bleed WebGL2 fragment shader. **Current look: "oil"** after the *Fever* cover (owner decision, 2026-10-08): a smooth, flowing heat gradient (domain-warped noise) shaped as a full-width horizontal band with wavy edges **running behind the name** (`data-oil-anchor` on the `h1`, like the cover: red type on the pale core), ramping cream → cobalt fringe → signal red → flame → amber → pale butter core, opening out on load and leaning toward the pointer. The name's stripe cuts are real gaps (CSS `mask-image`, padded so Vietnamese marks such as the tilde on Ễ are never clipped), so the oil shows through them. **This overrides the "no gradients / no blur" and stepped-motion rules for the hero background only**; everywhere else they still hold. The oil is a **45% wash** over the stock and simply sits under all the type: no knockout boxes or nav plate (owner feedback, 2026-10-08). At this strength sumi text reads ≥ 6.8:1 on every colour of the ramp, so small type in the hero must be **sumi** (the role line was cobalt and was switched; cobalt would drop to ~3.3:1). `data-knockout` still exists in the shader for any element that needs to opt in. Reduced motion draws one finished frame; no WebGL2 falls back to the older static halftone prints `hero-bg-desktop/mobile.webp` (out of date with the oil look). p5 never runs on the home page.
+8. **Works section (built):** `src/components/sections/works/` — giant `WORKS` + vertical 作品, track-list tabs on a full-width cyan band (tabs rise like an equalizer), then an **auto-advancing carousel** (owner request, 2026-10-08: no pin, the page scrolls straight through): one project sheet (TerminalPanel + rounded PhoneFrame) at a time, **next sheet every 4s**, printed in with a stepped wipe + 2-tick red misregistration, the active tab turns amber and an amber bar fills the cyan band over the interval. Tabs and ‹ › select; a PAUSE/PLAY button (WCAG 2.2.2). Pauses on hover, keyboard focus, off-screen and hidden tab; reduced motion = no autoplay. `PhoneFrame` is rounded to match the hero phone.
+9. **Skills section (built):** `src/components/sections/skills/` — giant `SKILLS` + vertical 技術 + a legend; a bento of rounded colour slabs, one per CV skill group (Mobile = red subject with a navy disc and giant count crossing its edge; Backend cobalt; Database navy; State amber; Tools paper-grey; Other cream). Every skill carries its **proof codes**, computed in `skill-proof.ts` from CV facts only: `PRJ-0x` (stack or bullet names it, whole-phrase match), `INT` (internship bullet), `CERT` (certificate title), else `CV`. Never hand-edit a proof; change `profile.ts`. Slabs print in diagonally, counts decode; reduced motion = static.
+7. **Languages shown: English, Intermediate (~IELTS 6.0), strong technical reading** (as in the CV). No other language is listed.
 
 ## Open decisions (ask the owner; do not decide silently)
-1. Site language: Vietnamese, English or bilingual. `<html lang="en">` is a placeholder.
-2. Which contact details to publish (see above).
-3. Hanko seal glyphs: proposed **明直** (Minh Trực); fallback `MT`.
-4. Whether DESIGN.md gets updated to the Archivo + Plex Mono stack.
+1. Whether DESIGN.md gets updated to the Archivo + Plex Mono stack.
 
 ## Verification checklist
 Run this before saying a UI task is done:

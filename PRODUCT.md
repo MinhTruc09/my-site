@@ -31,8 +31,8 @@ A mobile developer who designs as well as builds: he redesigned full UI/UX in Fi
 
 - Existing codebase: Next.js 16 (App Router), React 19, Tailwind CSS 4, shadcn/base-ui; GSAP, Lenis, three.js / react-three-fiber, p5 and Rive are installed for motion and visuals.
 - Content is currently the CV only; sections that lack material must use clearly marked placeholders, never invented content.
-- **Open decision:** site language (Vietnamese, English, or bilingual). The CV is in English.
-- **Open decision:** which contact details to publish. The CV holds phone, birth date and gender; do not publish these unless the owner confirms.
+- **Site language: English** (owner decision, 2026-10-08). The CV is in English; the name keeps its Vietnamese diacritics.
+- **Published contacts:** email, GitHub, LinkedIn and phone (owner decision, 2026-10-08). The birth year (2004) may be shown; the full birth date and gender are never published.
 
 ## Brand Commitments
 
@@ -79,7 +79,7 @@ Direction in one line: **Japanese retro print × cyberpunk**: a halftone poster/
 
 - Holographic or iridescent gradients, glassmorphism, outer glows and neon bloom (the `03` background, the `02` food renders).
 - Purple/violet accents and synthwave pink-purple palettes.
-- Blurred heat-map gradients as backgrounds (the *Fever* cover keeps the type, not the blur).
+- Blurred heat-map gradients as backgrounds (the *Fever* cover keeps the type, not the blur). **Exception (owner decision, 2026-10-08):** the home hero's background is a smooth *Fever*-style "oil" gradient on cream; nowhere else.
 - Generic dark "developer portfolio" templates: centered hero + avatar + 3 skill cards, Inter, indigo buttons.
 - NFT/crypto marketing tone ("invest in the future", "own a piece of").
 - Fake or decorative-only Japanese; every Japanese string must be real and meaningful.

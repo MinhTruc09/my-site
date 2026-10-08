@@ -267,9 +267,7 @@ One variable family gives both the extended display voice and the condensed voic
 
 **Loading.** Archivo (`axes: ["wdth"]`, `normal` + `italic`) and IBM Plex Mono load through `next/font/google` in `layout.tsx`, with `display: "swap"` and the subsets `latin` + `vietnamese`. Width is set with `font-stretch` (125% display, 62% condensed) in the `type-*` utilities.
 
-**Japanese glyphs (not loaded yet; pick one before the first JP label ships).** next/font has no `japanese` subset for Noto Sans JP, so either:
-- **(a)** load `Noto_Sans_JP` with `weight: "900"` and `preload: false`. The browser then downloads only the unicode-range slices that contain the characters actually used (作品, 概要, 技術, 連絡, 明直); or
-- **(b)** render those few labels and the seal as SVG outlines with an accessible Latin twin.
+**Japanese glyphs: SVG outlines (owner decision, 2026-10-08).** The four fixed labels (作品, 概要, 技術, 連絡) are rendered as inline SVG outlines, `aria-hidden="true"`, each beside its Latin twin, which carries the meaning. No Japanese webfont is loaded.
 
 Never let JP labels fall back to the system font: it differs on every OS and breaks the print look.
 
@@ -292,7 +290,7 @@ Never let JP labels fall back to the system font: it differs on every OS and bre
 
 **The Real Japanese Rule.** Every Japanese string is real, meaningful and marked `lang="ja"`: 作品 WORKS, 概要 ABOUT, 技術 SKILLS, 連絡 CONTACT (từ skill §3.4). Decorative Japanese gets `aria-hidden="true"`; the Latin twin carries the meaning.
 
-**Language (open decision in PRODUCT.md).** Until the owner decides, content is English (the CV language), the name stays in Vietnamese with full diacritics, and Japanese is limited to the fixed bilingual labels above (đề xuất).
+**Language: English** (owner decision, 2026-10-08). The name stays in Vietnamese with full diacritics, and Japanese is limited to the fixed bilingual labels above, drawn as SVG.
 
 ## Layout
 
@@ -324,13 +322,12 @@ Never let JP labels fall back to the system font: it differs on every OS and bre
 
 **Page as poster stack (từ tranh).** Each section follows the poster sequence of the references: a heavy title anchored top-left, then the image or slab, then a **color band along the bottom** carrying hex or catalog labels (từ tranh font-chu-va-mau, mau-tham-khao, mau-tham-khoa, manga-cyperpunk). Sections alternate cream stock with navy or cobalt full-bleed slabs. ⟲ ghi đè skill §2 "pick ONE substrate": the references put navy and cream in the same poster (từ tranh style-nhat-ban-noi-loan).
 
-**Section order (đề xuất, mapped to PRODUCT.md audiences).**
-1. **Hero:** name, role, stack, CTA (5-Second Rule).
+**Section order (owner decision, 2026-10-08: direction A "Print Run").**
+1. **Hero:** name, role, stack, CTA (5-Second Rule), plus a ticket stub with birth year, major, school, class years and GPA. Subject: the rotating 3D phone, standing on its own. Background: a full-bleed, smoothly flowing "oil" heat gradient after the *Fever* cover (cream → cobalt fringe → red → flame → amber → butter core), centred behind the phone; the type is knocked out to bare stock. Owner decision, 2026-10-08: this overrides the "no gradients / no blur" and stepped-motion rules **for the hero background only**.
 2. **Works / 作品:** the four CV projects, using track-list tabs and terminal panels.
-3. **Experience:** the Tây Ninh Digital Transformation Center internship, Figma → FlutterFlow.
-4. **Skills / 技術:** a bento of swatch slabs and terminal panels.
-5. **About / 概要:** education, GPA, certifications, hobbies.
-6. **Contact / 連絡:** the stub below the ✂ cut line.
+3. **Skills / 技術:** its own section; each skill points to the projects that used it.
+4. **About / 概要:** education, GPA, the Tây Ninh internship (Figma → FlutterFlow), certifications, languages (English), hobbies.
+5. **Contact / 連絡:** the stub below the ✂ cut line.
 
 **Asymmetry and eye path (từ tranh).** Nothing is centered by default (also skill §5). The eye enters top-left and travels down a **diagonal**: rising tabs, a tilted subject, a stepped stack of swatch slabs (từ tranh hero-va-cac-tab, manga-cyperpunk, nghe-thuat). It comes to rest on the bottom band.
 
@@ -399,7 +396,7 @@ One clear next step for each audience, in this order of weight:
 2. **`EMAIL ME`** (ghost button). Use a `mailto:` link to the CV email.
 3. **`/ GITHUB / LINKEDIN`** (nav-link voice).
 
-The hero shows 1 and 2. The contact stub repeats all three. Phone number, birth date and gender stay unpublished until the owner confirms (PRODUCT.md).
+The hero shows 1 and 2. The contact stub repeats all three and adds the phone as a `tel:` link (owner decision, 2026-10-08). The birth year may appear in the hero stub; the full birth date and gender are never published.
 
 ### Links and states (đề xuất)
 - **Inline links:** sumi text with a 2px underline in signal red, offset 3px. On hover the underline thickens into a solid red block behind cream text (on cream surfaces). On blue surfaces the underline is amber, per the Red-Meets-Blue Rule.
@@ -457,7 +454,7 @@ Project titles are staggered vertical denki-cyan tabs rising from a cyan band to
 The bottom band of a section: equal flat color columns, each labeled in spaced mono with its hex value or a section code. It is the most repeated motif of the art set (từ tranh font-chu-va-mau, mau-tham-khao, mau-tham-khoa, layout-cac-bang-mau, nghe-thuat, hero-va-cac-tab).
 
 ### Hanko Seal
-One per page: a signal-red circle with cream glyphs, rotated between -8° and 8° (từ skill §6). Proposed glyphs: **明直**, the Sino-Vietnamese characters for *Minh Trực*. Fallback: the initials `MT` in Archivo display. The owner must confirm before launch (đề xuất). The seal is decorative (`aria-hidden="true"`).
+One per page: a signal-red circle with cream glyphs, rotated between -8° and 8° (từ skill §6). Glyphs: the handle **`MinhTruc09`** in Archivo, stacked as `MINH` / `TRUC` / `09` inside the circle (owner decision, 2026-10-08). The seal is decorative (`aria-hidden="true"`).
 
 ### Social Card and Favicon (đề xuất)
 - **OG image** (1200 × 630, static PNG): a cream stock background, NGUYỄN / MINH / TRỰC in display-vi signal red, `MOBILE DEVELOPER · FLUTTER · SWIFTUI` in subtitle voice, a cobalt swatch band along the bottom with hex labels, and the hanko seal crossing the band edge. This is the preview recruiters see when the link is shared from LinkedIn or TopCV.

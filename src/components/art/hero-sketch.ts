@@ -23,6 +23,13 @@ export type HeroSketchParams = {
   slipEvery: number;
   /** Max cells the sun leans toward the pointer. */
   lean: number;
+  /**
+   * Clean stock for type: the screens fade to bare paper before this fraction of the width
+   * (clearX) or height (clearY), dots shrinking to nothing, so text never sits on halftone
+   * (DESIGN.md › The Readable-Over-Texture Rule). 0 = no clear zone.
+   */
+  clearX?: number;
+  clearY?: number;
 };
 
 export const DEFAULT_PARAMS: HeroSketchParams = {
@@ -133,6 +140,13 @@ export function createHeroSketch(
       y: h * P.sunY + lean.y * P.cell,
     });
 
+    // 0 inside the clear zone, 1 past it, with a ~12% band where the dots shrink away.
+    const clearMask = (x: number, y: number) => {
+      const fx = P.clearX ? smoothstep(P.clearX, P.clearX + 0.12, x / w) : 1;
+      const fy = P.clearY ? smoothstep(P.clearY, P.clearY + 0.12, y / h) : 1;
+      return fx * fy;
+    };
+
     const drawSheet = () => {
       const T = tick;
       const R = P.sunRadius * Math.min(w, h);
@@ -148,7 +162,7 @@ export function createHeroSketch(
       screen(15, 0, 0, (x, y) => {
         const ramp = (x / w) * 0.55 + (y / h) * 0.45;
         const n = p.noise(x * 0.0022, y * 0.0022, field) - 0.5;
-        let t = 0.06 + 0.78 * smoothstep(0.2, 1.05, ramp + n * 0.55);
+        let t = (0.06 + 0.78 * smoothstep(0.2, 1.05, ramp + n * 0.55)) * clearMask(x, y);
         if (pointer) {
           // a thumb on the paper: the screen lifts slightly around the pointer
           const dp = Math.hypot(x - pointer.x, y - pointer.y);
@@ -168,7 +182,7 @@ export function createHeroSketch(
         const d = Math.hypot(x - sun.x, y - sun.y);
         const edge = smoothstep(R, R * 0.72, d); // the edge dissolves into dots
         const n = p.noise(x * 0.004 + 40, y * 0.004, field * 0.6);
-        return edge * (0.62 + 0.38 * n);
+        return edge * (0.62 + 0.38 * n) * clearMask(x, y);
       });
 
       // 3 · Speed stripes: stock-coloured cuts through the sun, extending in whole cells.
