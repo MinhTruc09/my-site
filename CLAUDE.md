@@ -19,17 +19,16 @@ Personal portfolio of **Nguyễn Minh Trực** (handle `MinhTruc09`), a mobile d
 
 Rule of thumb: **frame from the skill; color, texture, motif and motion from the art; DESIGN.md decides.**
 
-**Fonts:** **Archivo** (variable, `wdth` 62–125: 125 = display, 62 = condensed and tabs) and **IBM Plex Mono** (labels, body, LCD). DESIGN.md and the code agree. Do not add other families except Noto Sans JP for the fixed Japanese labels (see Styling rules).
+**Known drift (open):** DESIGN.md still names Unbounded, Barlow Condensed, Orbitron, Noto Sans JP and DotGothic16. The code uses **Archivo** (variable, `wdth` 62–125) and **IBM Plex Mono**, as the owner chose. Follow the code. Update DESIGN.md only when asked.
 
 ## Commands
 ```bash
-npm run dev            # dev server (Turbopack) on http://localhost:3000. The OWNER runs it in their own terminal
+npm run dev            # dev server (Turbopack) on http://localhost:3000
 npm run build          # production build; also type-checks
 npm run lint           # ESLint (next core-web-vitals + typescript)
 npx tsc --noEmit       # type-check only
 ```
 `build`, `lint` and `tsc` are pre-allowed in `.claude/settings.json`. Run `build` and `lint` before calling any task done.
-**Dev server:** never start `npm run dev` in the foreground, because it never exits. Before taking screenshots, check that http://localhost:3000 responds. If it does not, start it as a background process, or ask the owner to run it.
 
 ## Stack
 - **Next.js 16.4** (App Router, Turbopack), **React 19.3**, TypeScript strict, path alias `@/*` → `src/*`.
@@ -71,8 +70,8 @@ Planned conventions (follow them when creating files):
 - Type roles: `type-display`, `type-display-vi` (Vietnamese lines), `type-headline`, `type-subtitle`, `type-label`, `type-tab`, `type-body`. Prefer these to ad-hoc font utilities. Archivo width comes from `font-stretch` (125% for display, 62% for condensed).
 - Radius: everything is square. `--radius` is 0, so all of shadcn's `rounded-*` resolve to 0. `rounded-slab` (28px) is **only** for full-color blocks that hold no controls. `rounded-full` is **only** for seals, badges and constellation nodes.
 - Spacing extras: `gutter`, `gutter-desktop`, `section`, `section-mobile`, `tap` (44px minimum target), `rule`, `rule-heavy`. Container: `max-w-page` (1440px). Breakpoints: `sm` 480, `md` 768, `lg` 1024, `xl` 1440.
-- Easing: `ease-press` = `cubic-bezier(.7,0,.2,1)`.
-- z-index layers are CSS vars: `--z-subject` 10, `--z-sticker` 20, `--z-header` 30, `--z-overlay` 40, `--z-grain` 50, `--z-cursor` 60. The grain overlay is `<GrainOverlay />` (class `.grain-overlay`) at `--z-grain`. Nothing interactive may sit above it except the cursor; it is `pointer-events: none`.
+- Easing: `ease-press` = `cubic-bezier(.7,0,.2,1)`. Its GSAP twin is the CustomEase `"cut"` (`EASE_CUT` / `motion.easeCut` from `@/lib/gsap`). Keep the two curves identical.
+- z-index layers are CSS vars: `--z-subject` 10, `--z-sticker` 20, `--z-header` 30, `--z-overlay` 40, `--z-grain` 50, `--z-cursor` 60. The grain overlay is `body::after` at `--z-grain`. Nothing interactive may sit above it except the cursor; it is `pointer-events: none`.
 - The dark terminal register is a scope, not a theme: put `data-register="terminal"` on a section to get a sumi ground, cream text and an acid focus ring. There is no light/dark toggle, and `prefers-color-scheme` is ignored.
 
 **Hard rules from DESIGN.md (most frequently broken):**
@@ -82,11 +81,13 @@ Planned conventions (follow them when creating files):
 - **Text never sits directly on halftone or photo.** Give it a solid backing plate.
 - **No purple or violet,** no synthwave, no centered "hero + avatar + 3 cards" template, no Inter or indigo buttons.
 - **Japanese must be real** and marked `lang="ja"` (作品 WORKS, 概要 ABOUT, 技術 SKILLS, 連絡 CONTACT). Purely decorative glyphs get `aria-hidden="true"`.
-- **Vietnamese at display size:** use `type-display-vi`, one word per line (NGUYỄN / MINH / TRỰC), on an element with `lang="vi"` (the page is `lang="en"`). Never outline Vietnamese lines. Check that marks (Ễ, Ự) are not clipped at 375px and 1440px.
-- **Japanese glyphs are not loaded yet.** Before the first JP label ships, either load `Noto_Sans_JP` (weight 900, `preload: false`, so only the used unicode slices download) or render the labels as SVG with a Latin twin. JP must never fall back to the system font.
+- **Vietnamese at display size:** use `type-display-vi`, one word per line (NGUYỄN / MINH / TRỰC). Check that marks (Ễ, Ự) are not clipped at 375px and 1440px.
 
 ## Motion
-- Use GSAP (with `useGSAP` from `@gsap/react`) plus Lenis synced to ScrollTrigger, only in client components under `src/components/motion/`.
+- Use GSAP (with `useGSAP` from `@gsap/react`) plus Lenis synced to ScrollTrigger, only in client components under `src/components/motion/`. Import `gsap` and plugins only from `@/lib/gsap`; it registers CustomEase, ScrollTrigger, SplitText, ScrambleTextPlugin and useGSAP.
+- `motion/SmoothScroll.tsx` (wraps the app in `layout.tsx`) owns Lenis. It calls `ScrollTrigger.clearScrollMemory("manual")`, refreshes triggers after `document.fonts.ready`, and jumps to the top on every route change. Lenis fights native `window.scrollTo` while it is animating, so programmatic scrolling must use `useSmoothScroll().scrollTo(target)` (number, selector or element; falls back to native under reduced motion). Same-page `href="#id"` links are intercepted by SmoothScroll and need no extra code; do not enable Lenis's own `anchors` option (it flashes a native jump first). In dev, `window.__lenis` exposes the instance for Playwright checks.
+- Global chrome lives in `brand/`: `GrainOverlay` and `Cursor` (crosshair + mono coordinates on fine pointers; on `a[href]`, `button` and `[role=button]` it extends and shows `[ LINK ]` / `[ PRESS ]`).
+- `/lab` (motion test bench) and `/lab/still` (captures `art/hero-still.webp`) exist only in development; `src/app/lab/layout.tsx` calls `notFound()` in production.
 - Patterns and tokens are listed in DESIGN.md › Motion: stripe wipe, chorus stagger, equalizer rise, halftone resolve, diagonal entry, sticker slap, swatch count-in.
 - Animate only `transform`, `opacity` and `clip-path`. Entrances play once. Use at most **one show-off effect per viewport**.
 - **5-Second Rule:** name, `MOBILE DEVELOPER`, `FLUTTER · SWIFTUI` and the primary CTA are visible on first paint. No intro may hide them for more than 600ms.
@@ -99,13 +100,13 @@ Planned conventions (follow them when creating files):
 - **Personal data:** publish only email, GitHub and LinkedIn. Phone, birth date and gender stay off the site until the owner confirms.
 - **Moodboard images** in `art/` and `design-refs/` are third-party works. They are gitignored and may be used only as temporary dev placeholders: copy them to `public/ref/` (gitignored), render them through `RefImage` (house treatment + `REF · TEMP` tag + fallback). They are never presented as the owner's work and never used as fake app screenshots.
 - **Pre-launch gate:** no `RefImage` on any route, and `public/ref/` empty.
-- `NguyenMinhTruc_CV_MobileDeveloperIntern.pdf` contains phone and birth date. It is **gitignored** (`NguyenMinhTruc_CV_*.pdf`). Never link it publicly. The `DOWNLOAD CV` button must point to a **redacted copy** with a different name in `public/` (for example `public/cv-nguyen-minh-truc.pdf`), and only after the owner provides it.
+- `NguyenMinhTruc_CV_MobileDeveloperIntern.pdf` contains phone and birth date and is **not gitignored**. Do not commit it or link it publicly until the owner decides. A public CV should be a redacted copy.
 
 ## Open decisions (ask the owner; do not decide silently)
 1. Site language: Vietnamese, English or bilingual. `<html lang="en">` is a placeholder.
 2. Which contact details to publish (see above).
 3. Hanko seal glyphs: proposed **明直** (Minh Trực); fallback `MT`.
-4. Japanese labels: Noto Sans JP webfont or SVG outlines.
+4. Whether DESIGN.md gets updated to the Archivo + Plex Mono stack.
 
 ## Verification checklist
 Run this before saying a UI task is done:
@@ -117,7 +118,7 @@ Run this before saying a UI task is done:
    - surface-pairing contrast
    - focus rings visible
 3. Run the Impeccable detector on changed UI files once:
-   `~/.claude/plugins/cache/impeccable/impeccable/*/skills/impeccable/scripts/impeccable detect --json <files>` (the version folder changes when the plugin updates. If the glob matches two versions, use the newest)
+   `~/.claude/plugins/cache/impeccable/impeccable/4.5.0/skills/impeccable/scripts/impeccable detect --json <files>`
 4. Do one batched fix round, then one confirm round. Do not polish in open-ended loops.
 
 ## Skills and tools

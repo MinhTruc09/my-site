@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Archivo, IBM_Plex_Mono } from "next/font/google";
-import { Cursor } from "@/components/Cursor";
-import { GrainOverlay } from "@/components/GrainOverlay";
-import { SmoothScroll } from "@/components/SmoothScroll";
+import { Cursor } from "@/components/brand/Cursor";
+import { GrainOverlay } from "@/components/brand/GrainOverlay";
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import "./globals.css";
 
 // Variable font with the width axis: wdth 125 = extended display, wdth 62 = condensed headlines and tabs.

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { HeroArt } from "@/components/art/HeroArt";
+import { BackToTop } from "./back-to-top";
 import { ClipReveal } from "@/components/motion/ClipReveal";
 import { HorizontalPin } from "@/components/motion/HorizontalPin";
 import { ScrambleTitle } from "@/components/motion/ScrambleTitle";
@@ -28,7 +29,7 @@ function RefTag({ file }: { file: string }) {
 export default function LabPage() {
   return (
     <main>
-      <header className="grid min-h-dvh grid-rows-[auto_1fr_auto] px-gutter py-6 lg:px-gutter-desktop">
+      <header id="lab-top" className="grid min-h-dvh grid-rows-[auto_1fr_auto] px-gutter py-6 lg:px-gutter-desktop">
         <div className="type-label flex justify-between">
           <span>№ LAB-01</span>
           <span>/ MOTION TEST</span>
@@ -101,8 +102,14 @@ export default function LabPage() {
         ))}
       </HorizontalPin>
 
-      <footer className="type-label border-t-2 border-dashed border-sumi px-gutter py-section-mobile lg:px-gutter-desktop">
-        ✂ END OF LAB
+      <footer className="flex flex-wrap items-center justify-between gap-4 border-t-2 border-dashed border-sumi px-gutter py-section-mobile lg:px-gutter-desktop">
+        <span className="type-label">✂ END OF LAB</span>
+        <span className="flex gap-4">
+          <a href="#lab-top" className="type-label inline-flex min-h-tap items-center underline underline-offset-4">
+            #LAB-TOP (ANCHOR)
+          </a>
+          <BackToTop />
+        </span>
       </footer>
     </main>
   );
