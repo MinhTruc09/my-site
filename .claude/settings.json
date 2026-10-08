@@ -1,0 +1,16 @@
+{
+    "permissions": {
+        "allow": [
+            "Bash(npm run lint)",
+            "Bash(npm run build)",
+            "Bash(npx tsc --noEmit)",
+            "mcp__playwright"
+        ]
+    },
+    "enabledMcpjsonServers": [
+        "playwright"
+    ],
+    "enabledPlugins": {
+        "frontend-design@claude-plugins-official": true
+    }
+}
