@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PhoneFrame } from "@/components/brand/PhoneFrame";
+import { PhonePoster } from "@/components/brand/PhonePoster";
 import { TerminalPanel } from "@/components/brand/TerminalPanel";
 import { TrackListTabs } from "@/components/brand/TrackListTabs";
 import { gsap, useGSAP } from "@/lib/gsap";
@@ -47,6 +48,11 @@ export function WorksRail({ items, header }: { items: readonly WorkItem[]; heade
   const [playing, setPlaying] = useState(true); // the visitor's choice (pause button)
   const [held, setHeld] = useState(false); // hover / focus inside
   const [visible, setVisible] = useState(false);
+  // the visitor has scrolled into the sheet itself: they are reading, so the clock waits
+  const [reading, setReading] = useState(false);
+  // only manual changes are announced; autoplay stays silent
+  const [announce, setAnnounce] = useState(false);
+  const sheets = useRef<HTMLDivElement>(null);
   const [reduced, setReduced] = useState(false);
   const [tick, setTick] = useState(0); // restarts the clock and the bar on manual picks
   const first = useRef(true);
@@ -88,7 +94,18 @@ export function WorksRail({ items, header }: { items: readonly WorkItem[]; heade
     };
   }, []);
 
-  const running = playing && !held && visible && !reduced;
+  // Reading = the sheet's top has passed the upper third of the viewport.
+  useEffect(() => {
+    const el = sheets.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setReading(e.isIntersecting), {
+      rootMargin: "0px 0px -66% 0px",
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const running = playing && !held && visible && !reading && !reduced;
 
   // The clock. Re-armed on every sheet change, so a manual pick also gets a full 4s.
   useEffect(() => {
@@ -152,6 +169,25 @@ export function WorksRail({ items, header }: { items: readonly WorkItem[]; heade
     { scope: root, dependencies: [active, reduced] },
   );
 
+  // Any "#prj-<slug>" link elsewhere on the page (Skills proof codes, the hero's NOW SHOWING
+  // chip) selects that sheet while SmoothScroll scrolls to it; a deep link selects on load.
+  useEffect(() => {
+    const indexOf = (hash: string) => items.findIndex((it) => `#prj-${it.slug}` === hash);
+    const onClick = (e: MouseEvent) => {
+      const link = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>("a[href^='#prj-']") : null;
+      if (!link || root.current?.contains(link)) return;
+      const i = indexOf(link.getAttribute("href") ?? "");
+      if (i >= 0) {
+        setAnnounce(true);
+        go(i);
+      }
+    };
+    const fromHash = indexOf(window.location.hash);
+    if (fromHash >= 0) go(fromHash);
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [items, go]);
+
   // Tabs select a sheet instead of jumping to an anchor.
   const onTabClick = (e: React.MouseEvent) => {
     const link = (e.target as Element).closest<HTMLAnchorElement>("a[href^='#prj-']");
@@ -159,6 +195,7 @@ export function WorksRail({ items, header }: { items: readonly WorkItem[]; heade
     const i = items.findIndex((it) => `#prj-${it.slug}` === link.getAttribute("href"));
     if (i < 0) return;
     e.preventDefault();
+    setAnnounce(true);
     go(i);
   };
 
@@ -211,7 +248,15 @@ export function WorksRail({ items, header }: { items: readonly WorkItem[]; heade
             {String(n).padStart(2, "0")}
           </p>
           <div className="flex gap-2">
-            <button type="button" className={control} onClick={() => go(active - 1)} aria-label="Previous project">
+            <button
+              type="button"
+              className={control}
+              onClick={() => {
+                setAnnounce(true);
+                go(active - 1);
+              }}
+              aria-label="Previous project"
+            >
               <Glyph d="M15 5l-7 7 7 7" />
             </button>
             <button
@@ -224,14 +269,26 @@ export function WorksRail({ items, header }: { items: readonly WorkItem[]; heade
               <Glyph d={playing && !reduced ? "M8 5v14M16 5v14" : "M7 5l12 7-12 7z"} />
               <span className="max-md:sr-only">{playing && !reduced ? "PAUSE" : "PLAY"}</span>
             </button>
-            <button type="button" className={control} onClick={() => go(active + 1)} aria-label="Next project">
+            <button
+              type="button"
+              className={control}
+              onClick={() => {
+                setAnnounce(true);
+                go(active + 1);
+              }}
+              aria-label="Next project"
+            >
               <Glyph d="M9 5l7 7-7 7" />
             </button>
           </div>
         </div>
 
         {/* sheets: stacked in one grid cell, only the active one shown */}
-        <div className="grid">
+        {/* polite announcement for visitor-initiated changes only */}
+        <p className="sr-only" aria-live="polite">
+          {announce ? `Showing ${current.code} ${current.name}, ${active + 1} of ${n}` : ""}
+        </p>
+        <div ref={sheets} className="grid">
           {items.map((it, i) => (
             <div
               key={it.slug}
@@ -267,7 +324,7 @@ export function WorksRail({ items, header }: { items: readonly WorkItem[]; heade
                     href={it.repo.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="underline decoration-acid-screen decoration-2 underline-offset-4 hover:bg-acid-screen hover:text-sumi"
+                    className="-my-3 inline-flex min-h-tap items-center underline decoration-acid-screen decoration-2 underline-offset-4 hover:bg-acid-screen hover:text-sumi"
                   >
                     {it.repo.label.toUpperCase()} ↗
                   </a>,
@@ -290,6 +347,7 @@ export function WorksRail({ items, header }: { items: readonly WorkItem[]; heade
                 src={it.screenshot}
                 alt={`${it.name} — app screenshot`}
                 sizes="220px"
+                placeholder={<PhonePoster code={it.code} name={it.name} platform={it.platform} stack={it.stack} />}
               />
             </div>
           ))}

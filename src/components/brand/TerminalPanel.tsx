@@ -43,7 +43,12 @@ export function TerminalPanel({
         <Heading className="type-headline min-w-0 [overflow-wrap:anywhere]">
           <span aria-hidden="true">/&nbsp;</span>
           {title}
-          {jp && <JpLabel label={jp} showLatin={false} size={20} className="ml-3 align-middle" />}
+          {/* decorative: its sr-only Latin twin would otherwise join the heading's name ("MOVIEWORKS") */}
+          {jp && (
+            <span aria-hidden="true">
+              <JpLabel label={jp} showLatin={false} size={20} className="ml-3 align-middle" />
+            </span>
+          )}
         </Heading>
         {code && <span className="type-label shrink-0 text-acid-screen">{code}</span>}
       </header>

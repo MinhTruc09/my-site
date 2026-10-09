@@ -100,7 +100,8 @@ export function HeroPhone({ className }: { className?: string }) {
   const current = PHONE_SCREENS[showing];
 
   return (
-    <div ref={box} aria-hidden="true" className={cn("pointer-events-none relative", className)}>
+    <div ref={box} className={cn("pointer-events-none relative", className)}>
+      <div aria-hidden="true" className="absolute inset-0">
       <Image
         src={still}
         alt=""
@@ -109,10 +110,20 @@ export function HeroPhone({ className }: { className?: string }) {
         className={cn("absolute inset-y-0 left-1/2 h-full w-auto max-w-none -translate-x-1/2", ready && "invisible")}
       />
       {animate && <PhoneCanvas running={running} pointer={pointer} onShowing={setShowing} onReady={onReady} />}
-      <p className="type-label absolute right-0 bottom-[12%] bg-sumi px-2 py-1 text-cream max-md:bottom-[6%]">
-        NOW SHOWING · <span className="text-amber">{current.code}</span>
-        <span className="max-md:hidden"> · {current.name.toUpperCase()}</span>
-      </p>
+      </div>
+      {/* the chip is a way into the work: it opens the project the phone is showing */}
+      <a
+        href={`#prj-${current.slug}`}
+        className="type-label pointer-events-auto absolute right-0 bottom-[12%] inline-flex min-h-tap items-center bg-sumi px-3 text-cream transition-colors duration-120 ease-[steps(2)] hover:bg-signal-red max-md:bottom-[6%]"
+      >
+        <span>
+          NOW SHOWING · <span className="text-amber">{current.code}</span>
+          <span className="max-md:hidden"> · {current.name.toUpperCase()}</span>
+        </span>
+        <span aria-hidden="true" className="ml-3">
+          →
+        </span>
+      </a>
     </div>
   );
 }

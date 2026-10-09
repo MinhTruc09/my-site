@@ -49,7 +49,11 @@ export function Cursor() {
       frame = requestAnimationFrame(() => {
         const t = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
         cross.style.transform = t;
-        readout.style.transform = t;
+        // flip the readout to the left of the crosshair when it would run off the right edge
+        const flip = e.clientX > window.innerWidth - 220;
+        readout.style.transform = flip ? `translate3d(${e.clientX}px, ${e.clientY}px, 0) translateX(-100%)` : t;
+        readout.style.paddingLeft = flip ? "0" : "";
+        readout.style.paddingRight = flip ? "12px" : "";
         const next = hoverOf(e.target);
         if (next !== hover) {
           hover = next;

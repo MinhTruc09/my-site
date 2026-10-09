@@ -11,7 +11,7 @@ import { SkillsMotion } from "./SkillsMotion";
  */
 const SLAB: Record<string, { surface: string; ink: string; code: string; span: string }> = {
   // tablets: a 2-column stack; desktops: the 12-column poster bento
-  Mobile: { surface: "bg-signal-red", ink: "text-cream", code: "text-amber", span: "md:col-span-2 lg:col-span-7 lg:row-span-2" },
+  Mobile: { surface: "bg-signal-red", ink: "text-cream", code: "text-cream", span: "md:col-span-2 lg:col-span-7 lg:row-span-2" },
   "Backend & APIs": { surface: "bg-cobalt", ink: "text-cream", code: "text-amber", span: "lg:col-span-5" },
   Database: { surface: "bg-navy-ink", ink: "text-cream", code: "text-amber", span: "lg:col-span-5" },
   "State Management": { surface: "bg-amber", ink: "text-sumi", code: "text-sumi", span: "lg:col-span-3" },
@@ -99,10 +99,23 @@ export function Skills() {
                           <span className="type-tab">{item}</span>
                           <span className={cn("type-label tracking-[0.15em]", s.code)}>
                             {proofs.map((p, pi) => (
-                              <abbr key={`${p.code}-${pi}`} title={p.title} className="no-underline">
+                              <span key={`${p.code}-${pi}`}>
                                 {pi > 0 && " "}
-                                {p.code}
-                              </abbr>
+                                {p.href ? (
+                                  <a
+                                    href={p.href}
+                                    aria-label={p.code === "CERT" || p.code === "INT" ? `${p.code}: ${p.title}` : `Used in ${p.code} ${p.title}`}
+                                    title={p.title}
+                                    className="inline-flex min-h-6 items-center underline decoration-1 underline-offset-4 hover:decoration-2"
+                                  >
+                                    {p.code}
+                                  </a>
+                                ) : (
+                                  <abbr title={p.title} className="no-underline">
+                                    {p.code}
+                                  </abbr>
+                                )}
+                              </span>
                             ))}
                           </span>
                         </li>

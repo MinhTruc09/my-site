@@ -16,6 +16,8 @@ type Entry = {
   bullets?: readonly string[];
   pipeline?: readonly string[];
   kind: "school" | "work" | "cert";
+  /** Anchor target for links from the hero stub and Skills proof codes. */
+  id?: string;
 };
 
 // Every line is a CV fact (PRODUCT.md › Evidence on Hand), in chronological order.
@@ -31,15 +33,23 @@ const TIMELINE: Entry[] = [
     bullets: intern.highlights,
     pipeline: ["FIGMA", "FLUTTERFLOW", "TESTING"],
     kind: "work",
+    id: "experience",
   },
   {
     when: edu.period.end,
     title: "Graduated",
     where: edu.school,
-    note: `${edu.honors[0]} · GPA ${edu.gpa.value} / ${edu.gpa.scale}`,
+    // the GPA is printed once, on the disc
+    note: edu.honors[0],
     kind: "school",
   },
-  ...certifications.map((c) => ({ when: c.date, title: c.name, note: c.issuer, kind: "cert" as const })),
+  ...certifications.map((c, i) => ({
+    when: c.date,
+    title: c.name,
+    note: c.issuer,
+    kind: "cert" as const,
+    id: i === 0 ? "certifications" : undefined,
+  })),
 ];
 
 const KIND = {
@@ -68,7 +78,10 @@ export function About() {
     <section id="about" aria-labelledby="about-title" className="border-t-2 border-sumi">
       <AboutMotion>
         <div className="mx-auto w-full max-w-page px-gutter py-section-mobile lg:px-gutter-desktop lg:py-section">
-          <header className="mb-10 flex items-end justify-between gap-6 md:w-2/3">
+          <div className="grid grid-cols-4 gap-x-6 gap-y-14 md:grid-cols-12">
+          {/* intro: heading + objective (left); the GPA disc now fills the opener's right half */}
+          <div className="col-span-4 md:col-span-7 md:row-start-1">
+          <header className="mb-10 flex items-end justify-between gap-6">
             <div>
               <h2 id="about-title" className="type-display">
                 About
@@ -81,7 +94,7 @@ export function About() {
           </header>
 
           {/* the CV objective, verbatim, as the section's opening statement */}
-          <p data-lead className="type-lead mb-section-mobile max-w-[60ch] text-sumi md:text-balance lg:mb-24">
+          <p data-lead className="type-lead max-w-[60ch] text-sumi md:text-balance">
             {OBJECTIVE.map((part, i) =>
               part.key ? (
                 <strong key={i} className="font-bold whitespace-nowrap text-signal-red">
@@ -92,10 +105,14 @@ export function About() {
               ),
             )}
           </p>
+          </div>
 
-          <div className="grid grid-cols-4 gap-x-6 gap-y-14 md:grid-cols-12">
-            {/* RIGHT on desktop, first on phones: GPA disc, language, hobbies */}
-            <aside data-aside aria-label="At a glance" className="col-span-4 self-start md:sticky md:top-8 md:order-2 md:col-span-5">
+            {/* RIGHT on desktop (both rows, sticky), between intro and timeline on phones */}
+            <aside
+              data-aside
+              aria-label="At a glance"
+              className="col-span-4 self-start md:sticky md:top-20 md:col-span-5 md:col-start-8 md:row-span-2 md:row-start-1"
+            >
               <div className="relative mx-auto aspect-square w-full max-w-[34rem]">
                 <span aria-hidden="true" className="absolute inset-0 rounded-full bg-cobalt" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-cream">
@@ -141,12 +158,17 @@ export function About() {
             </aside>
 
             {/* LEFT: the paper tape */}
-            <ol data-timeline className="relative col-span-4 md:order-1 md:col-span-7">
+            <ol data-timeline className="relative col-span-4 md:col-span-7 md:row-start-2 lg:mt-10">
               <span data-rule aria-hidden="true" className="absolute top-2 bottom-2 left-[5px] w-0.5 bg-sumi" />
               {TIMELINE.map((e) => {
                 const k = KIND[e.kind];
                 return (
-                  <li key={`${e.when}-${e.title}`} data-entry className="relative grid gap-2 pb-10 pl-10 last:pb-0">
+                  <li
+                    key={`${e.when}-${e.title}`}
+                    id={e.id}
+                    data-entry
+                    className="relative grid scroll-mt-24 gap-2 pb-10 pl-10 last:pb-0"
+                  >
                     <span aria-hidden="true" className={cn("absolute top-1.5 left-0 size-3 outline-2 outline-sumi", k.dot)} />
                     <p className="type-label flex flex-wrap items-center gap-x-3">
                       <time className="text-signal-red">{e.when}</time>

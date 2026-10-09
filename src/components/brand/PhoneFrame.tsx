@@ -12,6 +12,8 @@ type Props = {
   width?: number;
   sizes?: string;
   priority?: boolean;
+  /** Shown instead of the generic hatch while the screenshot is pending. */
+  placeholder?: React.ReactNode;
   className?: string;
 };
 
@@ -24,6 +26,7 @@ export function PhoneFrame({
   width = 320,
   sizes = "320px",
   priority = false,
+  placeholder,
   className,
 }: Props) {
   return (
@@ -45,7 +48,13 @@ export function PhoneFrame({
           />
         </div>
       ) : (
-        <PlaceholderFrame label="SCREENSHOT PENDING" aspect={`${aspect}`} className="overflow-hidden rounded-[1.75rem] border-0" />
+        placeholder ? (
+          <div className="relative w-full overflow-hidden rounded-[1.75rem]" style={{ aspectRatio: aspect }}>
+            {placeholder}
+          </div>
+        ) : (
+          <PlaceholderFrame label="SCREENSHOT PENDING" aspect={`${aspect}`} className="overflow-hidden rounded-[1.75rem] border-0" />
+        )
       )}
     </figure>
   );

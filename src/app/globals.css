@@ -255,6 +255,12 @@
     overflow-x: clip;
   }
 
+  /* anchor targets clear the fixed index bar (SiteNav) */
+  main section[id],
+  [id^="prj-"] {
+    scroll-margin-top: 3.5rem;
+  }
+
   ::selection {
     background: var(--color-signal-red);
     color: var(--color-cream);
@@ -263,6 +269,11 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 3px;
+  }
+
+  /* anchor targets receive programmatic focus for screen readers; no ring on the whole block */
+  [tabindex="-1"]:focus {
+    outline: none;
   }
 
   /* Custom cursor (Cursor.tsx) replaces the native one on fine pointers; text fields keep their caret */

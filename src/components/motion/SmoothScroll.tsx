@@ -100,10 +100,14 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       if (!target) return;
       e.preventDefault();
       history.pushState(null, "", url.hash);
+      // Lenis already honours the target's CSS scroll-margin-top (clears the fixed index bar)
       api.scrollTo(target);
       // Move focus for keyboard and screen-reader users, without a second native scroll.
-      if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
-      target.focus({ preventScroll: true });
+      // next frame: a listener (e.g. the Works carousel) may first make the target focusable
+      requestAnimationFrame(() => {
+        if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+        target.focus({ preventScroll: true });
+      });
     };
 
     start();

@@ -67,9 +67,9 @@ export function Contact() {
               <a
                 id="contact-email"
                 href={email.href}
-                className="type-headline mt-3 block break-all underline decoration-amber decoration-2 underline-offset-8 hover:bg-amber hover:text-sumi md:break-normal"
+                className="type-headline mt-3 block normal-case [overflow-wrap:anywhere] underline decoration-amber decoration-2 underline-offset-8 hover:bg-amber hover:text-sumi md:break-normal"
               >
-                {email.label}
+                {email.label.split("@")[0]}@<wbr />{email.label.split("@")[1]}
               </a>
               <div className="mt-6 flex flex-wrap gap-3">
                 <CopyEmail email={email.label} targetId="contact-email" />
@@ -97,7 +97,10 @@ export function Contact() {
                       className="group grid min-h-tap grid-cols-[6.5rem_1fr_auto] items-center gap-4 py-4 transition-colors duration-120 ease-[steps(2)] hover:bg-cream hover:text-navy-ink md:grid-cols-[9rem_1fr_auto] md:px-3"
                     >
                       <span className="type-label text-amber group-hover:text-cobalt">{LABEL[c.kind]}</span>
-                      <span className="type-body min-w-0 [overflow-wrap:anywhere]">{c.label}</span>
+                      <span className="type-body min-w-0 [overflow-wrap:anywhere]">
+                        <span className="max-md:hidden">{c.label}</span>
+                        <span className="md:hidden">{c.label.replace(/^(github|linkedin)\.com\//, "")}</span>
+                      </span>
                       <span aria-hidden="true" className="type-label">
                         {c.external ? "↗" : "→"}
                       </span>
@@ -106,37 +109,40 @@ export function Contact() {
                   </li>
                 ))}
               </ul>
+
+              {/* where and when */}
+              <dl className="type-label mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
+                <div>
+                  <dt className="text-amber">BASED IN</dt>
+                  <dd className="mt-2">{profile.location.toUpperCase()}</dd>
+                </div>
+                <div>
+                  <dt className="text-amber">LOCAL TIME</dt>
+                  <dd className="type-headline mt-2">
+                    <LocalTime />
+                  </dd>
+                  <dd className="mt-1">GMT+7</dd>
+                </div>
+                <div>
+                  <dt className="text-amber">HANDLE</dt>
+                  <dd className="mt-2">№ {profile.name.handle.toUpperCase()}</dd>
+                </div>
+              </dl>
             </div>
 
-            {/* aside: where and when */}
+            {/* aside: the stamp */}
             <div className="col-span-4 md:col-span-3 md:col-start-10">
               {/* original code print (src/components/art/stamp), posted like a stamp */}
-              <figure data-stamp className="mb-10 w-full max-w-60 -rotate-3 max-md:mx-auto">
+              <figure data-stamp className="w-full max-w-72 -rotate-3 max-md:mx-auto md:mt-2">
                 <Image
                   src={stamp}
                   alt="Halftone print in cobalt and navy: Saigon towers seen from below, a pale sun between them, a flyover cutting across."
-                  sizes="240px"
+                  sizes="288px"
                   className="h-auto w-full drop-shadow-[6px_6px_0_var(--color-cobalt)]"
                 />
                 <figcaption className="type-label mt-4 text-amber">SAIGON · LOOKING UP</figcaption>
               </figure>
-            <dl className="type-label grid content-start gap-6">
-              <div>
-                <dt className="text-amber">BASED IN</dt>
-                <dd className="mt-2">{profile.location.toUpperCase()}</dd>
-              </div>
-              <div>
-                <dt className="text-amber">LOCAL TIME</dt>
-                <dd className="type-headline mt-2">
-                  <LocalTime />
-                </dd>
-                <dd className="mt-1">GMT+7</dd>
-              </div>
-              <div>
-                <dt className="text-amber">HANDLE</dt>
-                <dd className="mt-2">№ {profile.name.handle.toUpperCase()}</dd>
-              </div>
-            </dl>
+
             </div>
           </div>
 

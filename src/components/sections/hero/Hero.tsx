@@ -20,12 +20,18 @@ const NAV = [
 const { education: edu } = profile;
 
 // Ticket stub rows: every value is a CV fact (PRODUCT.md › Evidence on Hand).
-const STUB = [
+const intern = profile.experience[0];
+const STUB: readonly { label: string; value: string; href?: string }[] = [
   { label: "BORN", value: `${profile.birthYear} · ${profile.location.split(",")[0].toUpperCase()}` },
-  { label: "MAJOR", value: edu.field.toUpperCase() },
   { label: "SCHOOL", value: "UNIVERSITY OF TRANSPORT HCMC" },
-  { label: "CLASS", value: `${edu.period.start}—${edu.period.end} · GPA ${edu.gpa.value} / ${edu.gpa.scale}` },
-] as const;
+  { label: "MAJOR", value: `${edu.field.toUpperCase()} · ${edu.period.start}—${edu.period.end}` },
+  // the strongest proof, one tap from the hero (critique 2026-10-09); opens the About timeline entry
+  {
+    label: "EXPERIENCE",
+    value: `${intern.role.toUpperCase()} · ${intern.period.start.split("/")[1]}`,
+    href: "#experience",
+  },
+];
 
 // Where the name's stripe cuts sit (fraction of the line box) and which line gets a speed bar.
 const CUTS = [0.58, 0.5, 0.62];
@@ -161,7 +167,16 @@ export function Hero() {
               <div key={row.label} className="contents">
                 <dt className="border-b border-sumi py-2 pr-4 pl-4 text-cobalt">{row.label}</dt>
                 <dd className="border-b border-sumi py-2 pr-4">
-                  <span data-decode>{row.value}</span>
+                  {row.href ? (
+                    <a
+                      href={row.href}
+                      className="underline decoration-signal-red decoration-2 underline-offset-4 hover:bg-signal-red hover:text-cream"
+                    >
+                      <span data-decode>{row.value}</span> <span aria-hidden="true">↓</span>
+                    </a>
+                  ) : (
+                    <span data-decode>{row.value}</span>
+                  )}
                 </dd>
               </div>
             ))}
@@ -183,7 +198,7 @@ export function Hero() {
           <SwatchBand swatches={["cobalt", "navy-ink", "signal-red", "cream", "amber"]} heightClassName="h-14 md:h-16" />
           <div
             data-seal
-            className="absolute -top-9 right-gutter z-(--z-sticker) lg:right-gutter-desktop max-md:-top-7"
+            className="absolute -top-14 right-gutter z-(--z-sticker) lg:right-gutter-desktop max-md:-top-10"
           >
             <HankoSeal size={72} rotate={-6} className="max-md:size-14" />
           </div>
