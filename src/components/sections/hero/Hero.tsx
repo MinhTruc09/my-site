@@ -2,6 +2,7 @@ import { getImageProps } from "next/image";
 import { HalftoneField } from "@/components/art/halftone/HalftoneField";
 import { ActionLink } from "@/components/brand/ActionLink";
 import { HankoSeal } from "@/components/brand/HankoSeal";
+import { Wordmark } from "@/components/brand/Wordmark";
 import { SwatchBand } from "@/components/brand/SwatchBand";
 import { profile } from "@/content/profile";
 import { HeroIntro } from "./HeroIntro";
@@ -67,8 +68,9 @@ export function Hero() {
       <HeroIntro>
         {/* corner metadata + slash nav */}
         <header className="flex flex-wrap items-center justify-between gap-x-6 px-gutter pt-3 lg:px-gutter-desktop">
-          <p className="type-label flex min-h-tap items-center">
-            <span className="sr-only">Handle: </span>№ {profile.name.handle.toUpperCase()}
+          <p className="flex min-h-tap items-center text-sumi">
+            <span className="sr-only">Handle: </span>
+            <Wordmark />
           </p>
           <nav aria-label="Sections" className="max-md:-mx-gutter max-md:w-[calc(100%+2*var(--spacing-gutter))] max-md:overflow-x-auto">
             <ul className="type-label flex items-center max-md:px-gutter max-md:tracking-[0.2em]">

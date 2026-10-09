@@ -78,8 +78,12 @@ export const profile = {
     },
   ],
 
-  /** Redacted CV (birth date and gender removed). null until the owner provides the file. */
-  cv: null as { href: string } | null,
+  /**
+   * Redacted CV: full birth date and gender removed by true PDF redaction (text deleted, not
+   * covered), metadata cleaned. Generated 2026-10-09 from NguyenMinhTruc_CV_MobileDeveloperIntern.pdf.
+   * Regenerate it whenever the source CV changes; never publish the source file.
+   */
+  cv: { href: "/cv-nguyen-minh-truc.pdf" } as { href: string } | null,
 
   projects: [
     {

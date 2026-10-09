@@ -10,12 +10,13 @@ import { SkillsMotion } from "./SkillsMotion";
  * the Mobile slab is the red subject, cobalt and navy carry the cool field.
  */
 const SLAB: Record<string, { surface: string; ink: string; code: string; span: string }> = {
-  Mobile: { surface: "bg-signal-red", ink: "text-cream", code: "text-amber", span: "md:col-span-7 md:row-span-2" },
-  "Backend & APIs": { surface: "bg-cobalt", ink: "text-cream", code: "text-amber", span: "md:col-span-5" },
-  Database: { surface: "bg-navy-ink", ink: "text-cream", code: "text-amber", span: "md:col-span-5" },
-  "State Management": { surface: "bg-amber", ink: "text-sumi", code: "text-sumi", span: "md:col-span-3" },
-  Tools: { surface: "bg-paper-grey", ink: "text-sumi", code: "text-cobalt", span: "md:col-span-4" },
-  Other: { surface: "bg-cream border-2 border-sumi", ink: "text-sumi", code: "text-signal-red", span: "md:col-span-5" },
+  // tablets: a 2-column stack; desktops: the 12-column poster bento
+  Mobile: { surface: "bg-signal-red", ink: "text-cream", code: "text-amber", span: "md:col-span-2 lg:col-span-7 lg:row-span-2" },
+  "Backend & APIs": { surface: "bg-cobalt", ink: "text-cream", code: "text-amber", span: "lg:col-span-5" },
+  Database: { surface: "bg-navy-ink", ink: "text-cream", code: "text-amber", span: "lg:col-span-5" },
+  "State Management": { surface: "bg-amber", ink: "text-sumi", code: "text-sumi", span: "lg:col-span-3" },
+  Tools: { surface: "bg-paper-grey", ink: "text-sumi", code: "text-cobalt", span: "lg:col-span-4" },
+  Other: { surface: "bg-cream border-2 border-sumi", ink: "text-sumi", code: "text-signal-red", span: "md:col-span-2 lg:col-span-5" },
 };
 
 const ORDER = ["Mobile", "Backend & APIs", "Database", "State Management", "Tools", "Other"];
@@ -55,7 +56,7 @@ export function Skills() {
             </dl>
           </header>
 
-          <div data-bento className="grid grid-cols-1 gap-3 md:grid-cols-12 md:gap-4">
+          <div data-bento className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-12">
             {groups.map((g, gi) => {
               const s = SLAB[g.group];
               return (
@@ -71,11 +72,11 @@ export function Skills() {
                   )}
                 >
                   <header className="flex items-start justify-between gap-4">
-                    <h3 id={`skill-${gi}`} className="type-label">
+                    <h3 id={`skill-${gi}`} className="type-label min-w-0">
                       № {String(gi + 1).padStart(2, "0")} · {g.group.toUpperCase()}
                     </h3>
                     {gi > 0 && (
-                      <p aria-label={`${g.items.length} skills`} className="type-headline leading-none">
+                      <p aria-label={`${g.items.length} skills`} className="type-headline shrink-0 leading-none">
                         <span data-count>{String(g.items.length).padStart(2, "0")}</span>
                       </p>
                     )}
@@ -83,14 +84,14 @@ export function Skills() {
                   {gi === 0 && (
                     /* the red subject meets the blue: a big navy disc crossing the slab edge,
                        carrying the count as a giant numeral (style-nhat-ban-noi-loan's "01") */
-                    <div aria-hidden="true" className="relative -mr-6 h-56 md:-mr-8 md:h-auto md:flex-1">
+                    <div aria-hidden="true" className="relative -mr-6 h-56 md:-mr-8 lg:h-auto lg:flex-1">
                       <span className="absolute top-1/2 -right-16 aspect-square h-[115%] -translate-y-1/2 rounded-full bg-navy-ink max-md:h-full" />
                       <span className="type-display absolute top-1/2 right-[12%] -translate-y-1/2 text-cream">
                         <span data-count>{String(g.items.length).padStart(2, "0")}</span>
                       </span>
                     </div>
                   )}
-                  <ul className={cn("relative grid gap-x-8 gap-y-3", gi === 0 && "md:grid-cols-2")}>
+                  <ul className={cn("relative grid gap-x-8 gap-y-3", (gi === 0 || g.group === "Other") && "md:grid-cols-2")}>
                     {g.items.map((item) => {
                       const proofs = proofsFor(item);
                       return (

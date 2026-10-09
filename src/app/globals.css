@@ -220,6 +220,15 @@
   line-height: 1;
 }
 
+/* Lead statement (the CV objective): Archivo at the subtitle size, sentence case */
+@utility type-lead {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+}
+
 @utility type-body {
   font-family: var(--font-mono);
   font-feature-settings: "zero" 1;
