@@ -54,6 +54,8 @@ export function Cursor() {
         readout.style.transform = flip ? `translate3d(${e.clientX}px, ${e.clientY}px, 0) translateX(-100%)` : t;
         readout.style.paddingLeft = flip ? "0" : "";
         readout.style.paddingRight = flip ? "12px" : "";
+        // over the fixed index bar the readout would print on top of the section links: hide it
+        readout.style.opacity = e.clientY < 64 && document.querySelector("nav[aria-label='Sections']:not([inert])") ? "0" : "";
         const next = hoverOf(e.target);
         if (next !== hover) {
           hover = next;

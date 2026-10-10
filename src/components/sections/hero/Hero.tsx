@@ -160,7 +160,7 @@ export function Hero() {
           </div>
 
           {/* ticket stub */}
-          <dl className="type-label max-md:tracking-[0.12em] relative z-(--z-subject) col-span-4 mt-10 grid w-full max-w-[34rem] grid-cols-[auto_1fr] self-start border-2 border-l-0 border-sumi bg-cream max-md:order-3 md:col-span-7 md:row-start-2 md:mt-8">
+          <dl className="type-label max-md:tracking-[0.12em] relative z-(--z-subject) col-span-4 mt-10 grid w-full max-w-[34rem] grid-cols-[auto_1fr] self-start border-2 border-l-0 border-sumi bg-cream max-md:order-3 max-md:mt-8 md:col-span-7 md:row-start-2 md:mt-8">
             {/* perforated edge */}
             <span aria-hidden="true" className="absolute inset-y-[-2px] left-0 border-l-2 border-dashed border-sumi" />
             {STUB.map((row) => (
@@ -170,7 +170,7 @@ export function Hero() {
                   {row.href ? (
                     <a
                       href={row.href}
-                      className="underline decoration-signal-red decoration-2 underline-offset-4 hover:bg-signal-red hover:text-cream"
+                      className="hit-area underline decoration-signal-red decoration-2 underline-offset-4 hover:bg-signal-red hover:text-cream"
                     >
                       <span data-decode>{row.value}</span> <span aria-hidden="true">↓</span>
                     </a>
@@ -188,7 +188,7 @@ export function Hero() {
           </dl>
 
           {/* RIGHT: the turning phone, standing on its own; the sun centres on it */}
-          <div className="relative col-span-4 mt-6 aspect-[4/5] max-md:order-2 md:col-span-5 md:col-start-8 md:row-span-2 md:row-start-1 md:mt-0 md:aspect-auto md:min-h-[32rem]">
+          <div className="relative col-span-4 mt-4 h-[46svh] max-md:order-2 md:col-span-5 md:col-start-8 md:row-span-2 md:row-start-1 md:mt-0 md:h-auto md:min-h-[32rem]">
             <HeroPhone className="absolute inset-x-0 top-0 -bottom-12 z-(--z-subject) md:-bottom-16" />
           </div>
         </div>

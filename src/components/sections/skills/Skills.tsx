@@ -28,7 +28,7 @@ export function Skills() {
   return (
     <section id="skills" aria-labelledby="skills-title" className="border-t-2 border-sumi">
       <SkillsMotion>
-        <div className="mx-auto w-full max-w-page px-gutter py-section-mobile lg:px-gutter-desktop lg:py-section">
+        <div className="mx-auto w-full max-w-page px-gutter py-section-mobile lg:px-gutter-desktop lg:pt-24 lg:pb-section">
           <header className="mb-10 grid grid-cols-4 items-end gap-x-6 md:grid-cols-12">
             <div className="col-span-4 flex items-end justify-between gap-6 md:col-span-8">
               <div>
@@ -45,8 +45,8 @@ export function Skills() {
             </div>
             {/* legend: what the proof codes mean */}
             <dl className="type-label col-span-4 mt-8 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 md:col-span-4 md:mt-0 md:justify-self-end">
-              <dt className="text-signal-red">PRJ-0X</dt>
-              <dd>USED IN A PROJECT</dd>
+              <dt className="text-signal-red">NAME·0X</dt>
+              <dd>USED IN PROJECT 0X</dd>
               <dt className="text-signal-red">INT</dt>
               <dd>INTERNSHIP</dd>
               <dt className="text-signal-red">CERT</dt>
@@ -84,7 +84,7 @@ export function Skills() {
                   {gi === 0 && (
                     /* the red subject meets the blue: a big navy disc crossing the slab edge,
                        carrying the count as a giant numeral (style-nhat-ban-noi-loan's "01") */
-                    <div aria-hidden="true" className="relative -mr-6 h-56 md:-mr-8 lg:h-auto lg:flex-1">
+                    <div aria-hidden="true" className="relative -mr-6 h-40 max-lg:order-last md:-mr-8 md:h-48 lg:h-auto lg:flex-1">
                       <span className="absolute top-1/2 -right-16 aspect-square h-[115%] -translate-y-1/2 rounded-full bg-navy-ink max-md:h-full" />
                       <span className="type-display absolute top-1/2 right-[12%] -translate-y-1/2 text-cream">
                         <span data-count>{String(g.items.length).padStart(2, "0")}</span>
@@ -97,22 +97,21 @@ export function Skills() {
                       return (
                         <li key={item} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-current/25 pb-2">
                           <span className="type-tab">{item}</span>
-                          <span className={cn("type-label tracking-[0.15em]", s.code)}>
+                          <span className={cn("type-label flex flex-wrap gap-x-3 tracking-[0.12em] normal-case", s.code)}>
                             {proofs.map((p, pi) => (
                               <span key={`${p.code}-${pi}`}>
-                                {pi > 0 && " "}
                                 {p.href ? (
                                   <a
                                     href={p.href}
                                     aria-label={p.code === "CERT" || p.code === "INT" ? `${p.code}: ${p.title}` : `Used in ${p.code} ${p.title}`}
                                     title={p.title}
-                                    className="inline-flex min-h-6 items-center underline decoration-1 underline-offset-4 hover:decoration-2"
+                                    className="hit-area inline-flex min-h-6 items-center underline decoration-1 underline-offset-4 hover:decoration-2"
                                   >
-                                    {p.code}
+                                    {p.label}
                                   </a>
                                 ) : (
                                   <abbr title={p.title} className="no-underline">
-                                    {p.code}
+                                    {p.label}
                                   </abbr>
                                 )}
                               </span>

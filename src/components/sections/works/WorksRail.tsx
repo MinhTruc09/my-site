@@ -218,7 +218,7 @@ export function WorksRail({ items, header }: { items: readonly WorkItem[]; heade
       className="flex flex-col"
     >
       {/* title + equalizer, sharing the top of the poster */}
-      <div className="mx-auto grid w-full max-w-page grid-cols-4 items-end gap-x-6 px-gutter pt-section-mobile md:grid-cols-12 lg:px-gutter-desktop lg:pt-section">
+      <div className="mx-auto grid w-full max-w-page grid-cols-4 items-end gap-x-6 px-gutter pt-section-mobile md:grid-cols-12 lg:px-gutter-desktop lg:pt-24">
         <div className="col-span-4 pb-6 md:col-span-8">{header}</div>
         <div data-tabs onClickCapture={onTabClick} className="col-span-4 -mx-gutter md:col-span-4 md:mx-0">
           <TrackListTabs

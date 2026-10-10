@@ -8,7 +8,13 @@ import { profile } from "@/content/profile";
  * - CV:     listed in the CV's skills only; shown as such, never given an invented source
  */
 /** `href` points at the evidence on this page: the project sheet in Works, or the About timeline. */
-export type Proof = { code: string; title: string; href?: string };
+export type Proof = { code: string; title: string; label: string; href?: string };
+
+// Display names on the proof links: the CV name, cut to its distinctive word when it is too long
+// for a chip (a truncation, never a new name), plus the catalog number: "ShareXe·02".
+const SHORT: Record<string, string> = { "agricultural-traceability": "Traceability" };
+const projectLabel = (p: { slug: string; name: string; code: string }) =>
+  `${SHORT[p.slug] ?? p.name}·${p.code.slice(-2)}`;
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
@@ -32,7 +38,7 @@ function projectProofs(skill: string): Proof[] {
         p.stack.some((s) => names.includes(norm(s))) ||
         p.highlights.some((h) => names.some((n) => mentions(h, n))),
     )
-    .map((p) => ({ code: p.code, title: p.name, href: `#prj-${p.slug}` }));
+    .map((p) => ({ code: p.code, title: p.name, label: projectLabel(p), href: `#prj-${p.slug}` }));
 }
 
 export function proofsFor(skill: string): Proof[] {
@@ -41,14 +47,16 @@ export function proofsFor(skill: string): Proof[] {
 
   // Every project ships as a public GitHub repository.
   if (key === "git github") {
-    out.push(...profile.projects.map((p) => ({ code: p.code, title: `${p.name} repository`, href: `#prj-${p.slug}` })));
+    out.push(
+      ...profile.projects.map((p) => ({ code: p.code, title: `${p.name} repository`, label: projectLabel(p), href: `#prj-${p.slug}` })),
+    );
   }
   const intern = profile.experience[0];
   if (intern.highlights.some((h) => mentions(h, key))) {
-    out.push({ code: "INT", title: `${intern.role}, ${intern.orgEn}`, href: "#experience" });
+    out.push({ code: "INT", title: `${intern.role}, ${intern.orgEn}`, label: "INT", href: "#experience" });
   }
   for (const c of profile.certifications) {
-    if (mentions(c.name, key)) out.push({ code: "CERT", title: c.name, href: "#certifications" });
+    if (mentions(c.name, key)) out.push({ code: "CERT", title: c.name, label: "CERT", href: "#certifications" });
   }
-  return out.length ? out : [{ code: "CV", title: "Listed in the CV" }];
+  return out.length ? out : [{ code: "CV", title: "Listed in the CV", label: "CV" }];
 }
