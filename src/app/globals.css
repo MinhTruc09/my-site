@@ -273,6 +273,13 @@
     inset: -10px -4px;
   }
 
+  /* the hero phone's still, when WebGL is unavailable: a slow float and sway */
+  @keyframes phone-drift {
+    /* transform only: Tailwind's -translate-x-1/2 lives on the separate `translate` property */
+    0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+    50% { transform: translateY(-12px) rotate(1deg); }
+  }
+
   ::selection {
     background: var(--color-signal-red);
     color: var(--color-cream);

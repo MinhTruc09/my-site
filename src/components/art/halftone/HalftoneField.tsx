@@ -49,6 +49,7 @@ export function HalftoneField({
     const host = canvas.parentElement!;
     const gl = canvas.getContext("webgl2", { antialias: false, alpha: false, powerPreference: "low-power" });
     if (!gl) {
+      console.warn("HalftoneField: WebGL2 unavailable (disabled or blocked by the browser), using the still.");
       setFailed(true);
       return;
     }
@@ -62,7 +63,7 @@ export function HalftoneField({
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program) ?? "link");
     } catch (err) {
       // the print fallback takes over; keep the reason visible for debugging
-      console.warn("HalftoneField: WebGL program failed, using the static print.", err);
+      console.warn("HalftoneField: WebGL program failed, using the still.", err);
       setFailed(true);
       return;
     }

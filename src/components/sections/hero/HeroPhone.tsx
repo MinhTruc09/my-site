@@ -46,6 +46,8 @@ const subscribe = (cb: () => void) => {
  */
 export function HeroPhone({ className }: { className?: string }) {
   const animate = useSyncExternalStore(subscribe, canAnimate, () => false);
+  // no WebGL but motion allowed: the still floats gently instead of standing dead
+  const drift = useSyncExternalStore(subscribe, () => !window.matchMedia(REDUCED).matches && !deviceCapable(), () => false);
   const box = useRef<HTMLDivElement>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
   const [ready, setReady] = useState(false);
@@ -107,7 +109,11 @@ export function HeroPhone({ className }: { className?: string }) {
         alt=""
         loading="eager"
         sizes="(min-width: 1024px) 34vw, 80vw"
-        className={cn("absolute inset-y-0 left-1/2 h-full w-auto max-w-none -translate-x-1/2", ready && "invisible")}
+        className={cn(
+          "absolute inset-y-0 left-1/2 h-full w-auto max-w-none -translate-x-1/2",
+          ready && "invisible",
+          drift && "animate-[phone-drift_6s_ease-in-out_infinite]",
+        )}
       />
       {animate && <PhoneCanvas running={running} pointer={pointer} onShowing={setShowing} onReady={onReady} />}
       </div>

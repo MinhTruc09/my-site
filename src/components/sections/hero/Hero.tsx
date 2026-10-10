@@ -37,8 +37,8 @@ const STUB: readonly { label: string; value: string; href?: string }[] = [
 const CUTS = [0.58, 0.5, 0.62];
 
 /**
- * No-WebGL fallback: static prints of the p5 press, 16:10 on tablets/desktops and 2:5 on
- * phones, each keeping the side where the type sits as bare stock.
+ * No-WebGL fallback: finished frames of the oil shader itself (captured from the live hero with
+ * everything else hidden, 1440×900 and 390×844), so the hero looks the same without a GPU.
  */
 function HeroPrintFallback() {
   const common = { alt: "", priority: true, sizes: "100vw" } as const;
@@ -50,7 +50,7 @@ function HeroPrintFallback() {
       <img
         {...mobile}
         alt=""
-        className="absolute inset-0 size-full object-cover object-[50%_20%] md:object-[100%_50%]"
+        className="absolute inset-0 size-full object-cover object-top"
       />
     </picture>
   );
