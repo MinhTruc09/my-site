@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Environment, Lightformer, RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { PALETTE } from "@/lib/palette";
 import { PHONE_SCREENS, SCREEN_ASPECT } from "./phone-screens";
@@ -9,133 +10,108 @@ import { roundedPanel, roundedSlab } from "./phone-geometry";
 import { loadScreenTexture } from "./screen-texture";
 
 /*
- * The hero subject: a phone printed in palette inks. Rounded like the real device
- * (owner decision, 2026-10-08, overriding the 0-radius rule for this object only) but never
- * photoreal: three-step toon (cobalt catch-light on the bevel / navy / sumi shade), a cobalt
- * halftone screen in the shade, and a cream rim line on the silhouette like manga linework.
- * The screen is unlit, so screenshots keep their true colours.
- * Motion is counted, not smooth: one step every TICK ms.
+ * The hero subject: a realistic phone (owner feedback, 2026-10-10: the toon/halftone print
+ * read as a flat, blurry blob). Physically based materials lit by a code-built studio
+ * environment (no HDR download): a blue-titanium frame with rounded machined edges, frosted
+ * navy back glass, a raised glossy camera plateau with metal-ringed lenses, and a front glass
+ * whose reflections slide across the screen as it turns. The screen itself is emissive and
+ * untone-mapped, so app screens keep their true colours under the glass.
+ * Motion is smooth: hold facing front, one eased full turn (the app swaps while the back faces
+ * the viewer), a slow float, and a damped tilt toward the pointer.
  */
 
-const TICK = 150; // ms per mechanical step
-const HOLD_TICKS = 16; // ≈2.4s facing front
-const TURN_STEPS = 12; // 12 × 30° = one full turn (≈1.8s); the app swaps at step 6 (back facing)
-const BASE_YAW = THREE.MathUtils.degToRad(-14);
-const BASE_PITCH = THREE.MathUtils.degToRad(4);
-const TILT_STEP = THREE.MathUtils.degToRad(2);
-const MAX_YAW = THREE.MathUtils.degToRad(8);
-const MAX_PITCH = THREE.MathUtils.degToRad(5);
+const HOLD = 3.2; // s facing front
+const TURN = 2.4; // s per full turn
+const BASE_YAW = THREE.MathUtils.degToRad(-16);
+const BASE_PITCH = THREE.MathUtils.degToRad(5);
+const MAX_YAW = THREE.MathUtils.degToRad(12);
+const MAX_PITCH = THREE.MathUtils.degToRad(7);
 
-// Body proportions (units): 9:19.5 screen inside a thin bezel, iPhone-like corner radii.
-const BEZEL = 0.036;
-const SCREEN_H = 1.42;
+// Dimensions (units), outside in: frame → front glass → bezel → 9:19.5 screen.
+const SCREEN_H = 1.4;
 const SCREEN_W = SCREEN_H * SCREEN_ASPECT;
-const BODY_W = SCREEN_W + BEZEL * 2;
-const BODY_H = SCREEN_H + BEZEL * 2;
-const BODY_D = 0.09;
+const BEZEL = 0.024;
+const GLASS_W = SCREEN_W + BEZEL * 2;
+const GLASS_H = SCREEN_H + BEZEL * 2;
+const EDGE = 0.026; // rounded frame edge (bevel)
+const BODY_W = GLASS_W + EDGE * 2;
+const BODY_H = GLASS_H + EDGE * 2;
+const BODY_D = 0.1;
 const BODY_R = 0.12;
-const SCREEN_R = BODY_R - BEZEL * 0.85;
+const GLASS_R = BODY_R - EDGE;
+const SCREEN_R = GLASS_R - BEZEL * 0.8;
+const FRONT = BODY_D / 2;
 
-// The body shader writes palette sRGB straight to the (flat, untone-mapped) output: exact inks.
-const hex = (k: keyof typeof PALETTE) => new THREE.Color().setStyle(PALETTE[k].hex, THREE.LinearSRGBColorSpace);
+const ink = (k: keyof typeof PALETTE) => new THREE.Color(PALETTE[k].hex);
+const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
-const bodyVertex = /* glsl */ `
-  varying vec3 vNormal;
-  varying vec3 vView;
-  void main() {
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    vNormal = normalize(normalMatrix * normal);
-    vView = -mv.xyz;
-    gl_Position = projectionMatrix * mv;
-  }
-`;
-
-const bodyFragment = /* glsl */ `
-  uniform vec3 uLit;
-  uniform vec3 uShade;
-  uniform vec3 uDot;
-  uniform vec3 uCatch;
-  uniform vec3 uRim;
-  uniform vec3 uLight;
-  uniform float uCell;
-  uniform float uDpr;
-  varying vec3 vNormal;
-  varying vec3 vView;
-  void main() {
-    vec3 n = normalize(vNormal);
-    float ndl = dot(n, normalize(uLight));
-    vec3 col = ndl > 0.82 ? uCatch : (ndl > 0.2 ? uLit : uShade);
-    // cobalt halftone in the shade: screen-space dots at 15°, area carries the tone
-    if (ndl <= 0.2) {
-      float tone = clamp((0.2 - ndl) * 1.6, 0.0, 0.85);
-      vec2 p = gl_FragCoord.xy / uDpr;
-      float a = radians(15.0);
-      p = mat2(cos(a), -sin(a), sin(a), cos(a)) * p;
-      vec2 c = mod(p, uCell) - 0.5 * uCell;
-      float r = 0.5 * uCell * sqrt(tone) * 1.08;
-      if (length(c) < r) col = uDot;
-    }
-    // silhouette line: where the surface turns away from the viewer
-    float facing = abs(dot(n, normalize(vView)));
-    if (facing < 0.22) col = uRim;
-    gl_FragColor = vec4(col, 1.0);
-  }
-`;
+function useMaterials() {
+  return useMemo(() => {
+    // blue titanium: cobalt lifted toward paper grey so the metal reads under the studio lights
+    const titanium = ink("cobalt").lerp(ink("paper-grey"), 0.45);
+    return {
+      frame: new THREE.MeshPhysicalMaterial({ color: titanium, metalness: 1, roughness: 0.24 }),
+      // lens barrels: brighter, polished metal so the camera reads at hero size
+      barrel: new THREE.MeshPhysicalMaterial({ color: ink("paper-grey"), metalness: 1, roughness: 0.18 }),
+      back: new THREE.MeshPhysicalMaterial({
+        color: ink("navy-ink").lerp(ink("cobalt"), 0.6),
+        metalness: 0,
+        roughness: 0.4,
+        clearcoat: 1,
+        clearcoatRoughness: 0.45,
+      }),
+      plateau: new THREE.MeshPhysicalMaterial({
+        color: ink("navy-ink").lerp(ink("cobalt"), 0.7),
+        metalness: 0,
+        roughness: 0.12,
+        clearcoat: 1,
+        clearcoatRoughness: 0.05,
+      }),
+      glass: new THREE.MeshPhysicalMaterial({ color: "#050506", metalness: 0, roughness: 0.06, clearcoat: 1 }),
+      lens: new THREE.MeshPhysicalMaterial({ color: "#020203", metalness: 0.2, roughness: 0, clearcoat: 1 }),
+      lensTint: new THREE.MeshPhysicalMaterial({ color: ink("cobalt").multiplyScalar(0.25), metalness: 0.6, roughness: 0.15 }),
+      flash: new THREE.MeshPhysicalMaterial({ color: ink("cream"), roughness: 0.35, transmission: 0, clearcoat: 1 }),
+      island: new THREE.MeshPhysicalMaterial({ color: "#000000", roughness: 0.15, clearcoat: 1 }),
+      port: new THREE.MeshBasicMaterial({ color: "#000000" }),
+    };
+  }, []);
+}
 
 type SceneProps = {
   frozen: boolean;
-  running: boolean;
   pointer: React.RefObject<{ x: number; y: number } | null>;
   onShowing: (index: number) => void;
   onReady: () => void;
 };
 
-function Phone({ frozen, running, pointer, onShowing, onReady }: SceneProps) {
+function Phone({ frozen, pointer, onShowing, onReady }: SceneProps) {
   const group = useRef<THREE.Group>(null);
-  const slip = useRef<THREE.Mesh>(null);
+  const screenMat = useRef<THREE.MeshPhysicalMaterial>(null);
+  const gl = useThree((s) => s.gl);
   const invalidate = useThree((s) => s.invalidate);
-  const dpr = useThree((s) => s.viewport.dpr);
   const [textures, setTextures] = useState<THREE.Texture[] | null>(null);
-  const screenMat = useRef<THREE.MeshBasicMaterial>(null);
+  const m = useMaterials();
 
-  const bodyMat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        vertexShader: bodyVertex,
-        fragmentShader: bodyFragment,
-        uniforms: {
-          uLit: { value: hex("navy-ink") },
-          uShade: { value: hex("sumi") },
-          uDot: { value: hex("cobalt") },
-          uCatch: { value: hex("cobalt") },
-          uRim: { value: hex("cream") },
-          uLight: { value: new THREE.Vector3(-0.6, 0.7, 0.9) },
-          uCell: { value: 5 },
-          // halftone cells are sized in CSS px, so the screen pattern stays 5px on retina
-          uDpr: { value: dpr },
-        },
-      }),
-    [dpr],
-  );
-
-  const bodyGeo = useMemo(() => roundedSlab(BODY_W, BODY_H, BODY_R, BODY_D, 0.018), []);
+  const bodyGeo = useMemo(() => roundedSlab(BODY_W, BODY_H, BODY_R, BODY_D, EDGE, 10), []);
+  const glassGeo = useMemo(() => roundedPanel(GLASS_W, GLASS_H, GLASS_R), []);
   const screenGeo = useMemo(() => roundedPanel(SCREEN_W, SCREEN_H, SCREEN_R), []);
-  const islandGeo = useMemo(() => roundedPanel(SCREEN_W * 0.3, 0.07, 0.035), []);
-  const bumpGeo = useMemo(() => roundedSlab(0.36, 0.36, 0.08, 0.03, 0.008), []);
+  const islandGeo = useMemo(() => roundedPanel(SCREEN_W * 0.3, 0.075, 0.0375), []);
+  const plateauGeo = useMemo(() => roundedSlab(0.36, 0.36, 0.085, 0.022, 0.009, 6), []);
 
-  // Mechanical state, advanced only on ticks.
-  const state = useRef({ tick: 0, step: -1, index: 0, yaw: 0, pitch: 0, slipTicks: 0 });
+  const state = useRef({ t: 0, turning: false, swapped: false, index: 0, yaw: 0, pitch: 0, clock: 0 });
 
   useEffect(() => {
     let alive = true;
-    Promise.all(PHONE_SCREENS.map(loadScreenTexture)).then((t) => {
+    const aniso = gl.capabilities.getMaxAnisotropy();
+    Promise.all(PHONE_SCREENS.map(loadScreenTexture)).then((list) => {
       if (!alive) return;
-      setTextures(t);
+      for (const t of list) t.anisotropy = aniso;
+      setTextures(list);
     });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [gl]);
 
   useEffect(() => {
     if (!textures) return;
@@ -145,118 +121,145 @@ function Phone({ frozen, running, pointer, onShowing, onReady }: SceneProps) {
     return () => cancelAnimationFrame(id);
   }, [textures, invalidate, onReady]);
 
-  // The clock: one step per TICK, nothing in between.
-  useEffect(() => {
-    if (frozen || !running || !textures) return;
-    const id = window.setInterval(() => {
-      const s = state.current;
-      s.tick++;
-
-      // pointer tilt, one TILT_STEP per tick toward the target
-      const p = pointer.current;
-      const ty = p ? THREE.MathUtils.clamp(p.x * MAX_YAW, -MAX_YAW, MAX_YAW) : 0;
-      const tp = p ? THREE.MathUtils.clamp(-p.y * MAX_PITCH, -MAX_PITCH, MAX_PITCH) : 0;
-      s.yaw += Math.abs(ty - s.yaw) < TILT_STEP ? ty - s.yaw : Math.sign(ty - s.yaw) * TILT_STEP;
-      s.pitch += Math.abs(tp - s.pitch) < TILT_STEP ? tp - s.pitch : Math.sign(tp - s.pitch) * TILT_STEP;
-
-      // hold → turn (12 steps) → hold
-      if (s.step < 0) {
-        if (s.tick % HOLD_TICKS === 0) s.step = 0;
-      } else {
-        s.step++;
-        if (s.step === TURN_STEPS / 2) {
-          // back faces the viewer: swap to the next app, and slip the red drum for 2 ticks
-          s.index = (s.index + 1) % textures.length;
-          const mat = screenMat.current;
-          if (mat) {
-            mat.map = textures[s.index];
-            mat.needsUpdate = true;
-          }
-          s.slipTicks = 2;
-          onShowing(s.index);
-        }
-        if (s.step >= TURN_STEPS) {
-          s.step = -1;
-          s.tick = 0;
-        }
-      }
-      if (s.slipTicks > 0) s.slipTicks--;
-      invalidate();
-    }, TICK);
-    return () => window.clearInterval(id);
-  }, [frozen, running, textures, pointer, onShowing, invalidate]);
-
-  useFrame(() => {
+  useFrame((_, delta) => {
     const g = group.current;
     if (!g) return;
     const s = state.current;
-    const turn = s.step < 0 ? 0 : (s.step / TURN_STEPS) * Math.PI * 2;
-    g.rotation.set(BASE_PITCH + s.pitch, BASE_YAW + s.yaw + turn, 0);
-    if (slip.current) slip.current.visible = s.slipTicks > 0;
+    const dt = Math.min(delta, 1 / 20);
+
+    if (!frozen && textures) {
+      s.clock += dt;
+      s.t += dt;
+      if (!s.turning && s.t >= HOLD) {
+        s.turning = true;
+        s.swapped = false;
+        s.t = 0;
+      }
+      if (s.turning) {
+        const p = Math.min(1, s.t / TURN);
+        if (!s.swapped && easeInOut(p) >= 0.5) {
+          // the back faces the viewer: swap to the next app
+          s.swapped = true;
+          s.index = (s.index + 1) % textures.length;
+          const mat = screenMat.current;
+          if (mat) {
+            mat.emissiveMap = textures[s.index];
+            mat.needsUpdate = true;
+          }
+          onShowing(s.index);
+        }
+        if (p >= 1) {
+          s.turning = false;
+          s.t = 0;
+        }
+      }
+
+      const ptr = pointer.current;
+      const ty = ptr ? THREE.MathUtils.clamp(ptr.x, -1, 1) * MAX_YAW : 0;
+      const tp = ptr ? -THREE.MathUtils.clamp(ptr.y, -1, 1) * MAX_PITCH : 0;
+      s.yaw = THREE.MathUtils.damp(s.yaw, ty, 3, dt);
+      s.pitch = THREE.MathUtils.damp(s.pitch, tp, 3, dt);
+    }
+
+    const turn = s.turning ? easeInOut(Math.min(1, s.t / TURN)) * Math.PI * 2 : 0;
+    g.rotation.set(BASE_PITCH + s.pitch + Math.sin(s.clock * 0.9) * 0.015, BASE_YAW + s.yaw + turn, Math.sin(s.clock * 0.6) * 0.012);
+    g.position.y = Math.sin(s.clock * 0.8) * 0.025;
   });
 
   if (!textures) return null;
 
   return (
     <group ref={group}>
-      <mesh geometry={bodyGeo} material={bodyMat} />
+      {/* frame: the slab's rounded edge is the visible titanium band */}
+      <mesh geometry={bodyGeo} material={m.frame} />
 
-      {/* screen (front), rounded to follow the body */}
-      <mesh geometry={screenGeo} position={[0, 0, BODY_D / 2 + 0.001]}>
-        <meshBasicMaterial ref={screenMat} map={textures[0]} toneMapped={false} />
+      {/* front: glass, the screen under it, Dynamic Island */}
+      <mesh geometry={glassGeo} material={m.glass} position={[0, 0, FRONT + 0.0006]} />
+      <mesh geometry={screenGeo} position={[0, 0, FRONT + 0.0012]}>
+        <meshPhysicalMaterial
+          ref={screenMat}
+          color="#000000"
+          emissive="#ffffff"
+          emissiveMap={textures[0]}
+          emissiveIntensity={1}
+          roughness={0.1}
+          envMapIntensity={0.35}
+          toneMapped={false}
+        />
       </mesh>
-      {/* Dynamic Island */}
-      <mesh geometry={islandGeo} position={[0, SCREEN_H / 2 - 0.075, BODY_D / 2 + 0.002]}>
-        <meshBasicMaterial color={PALETTE.sumi.hex} toneMapped={false} />
-      </mesh>
-      {/* misregistered red drum, shown for 2 ticks on each app swap */}
-      <mesh ref={slip} geometry={screenGeo} position={[0.022, -0.016, BODY_D / 2 + 0.0005]} visible={false}>
-        <meshBasicMaterial color={PALETTE["signal-red"].hex} toneMapped={false} />
-      </mesh>
+      <mesh geometry={islandGeo} material={m.island} position={[0, SCREEN_H / 2 - 0.07, FRONT + 0.002]} />
 
-      {/* back: rounded camera plateau with two lenses and a flash (1-bit) */}
-      <group position={[-BODY_W / 2 + 0.25, BODY_H / 2 - 0.25, -BODY_D / 2 - 0.012]}>
-        <mesh geometry={bumpGeo} material={bodyMat} />
-        {[
-          [-0.075, 0.075],
-          [-0.075, -0.075],
-        ].map(([x, y]) => (
-          <group key={`${y}`} position={[x, y, -0.017]} rotation={[0, Math.PI, 0]}>
-            <mesh>
-              <circleGeometry args={[0.058, 40]} />
-              <meshBasicMaterial color={PALETTE.sumi.hex} toneMapped={false} />
+      {/* back: frosted glass */}
+      <mesh geometry={glassGeo} material={m.back} position={[0, 0, -FRONT - 0.0006]} rotation={[0, Math.PI, 0]} />
+
+      {/* camera plateau, top-left as seen from the back */}
+      <group position={[BODY_W / 2 - EDGE - 0.2, BODY_H / 2 - EDGE - 0.2, -FRONT - 0.011]}>
+        <mesh geometry={plateauGeo} material={m.plateau} />
+        {[0.08, -0.08].map((y) => (
+          <group key={y} position={[0.075, y, -0.011]}>
+            {/* metal barrel */}
+            <mesh material={m.barrel} rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.008]}>
+              <cylinderGeometry args={[0.066, 0.066, 0.018, 48]} />
             </mesh>
-            <mesh position={[0, 0, 0.001]}>
-              <ringGeometry args={[0.03, 0.044, 40]} />
-              <meshBasicMaterial color={PALETTE.cream.hex} toneMapped={false} />
+            {/* cover glass and the lens element under it */}
+            <mesh material={m.lens} rotation={[0, Math.PI, 0]} position={[0, 0, -0.0172]}>
+              <circleGeometry args={[0.054, 48]} />
+            </mesh>
+            <mesh material={m.lensTint} rotation={[0, Math.PI, 0]} position={[0, 0, -0.0175]}>
+              <ringGeometry args={[0.018, 0.032, 48]} />
             </mesh>
           </group>
         ))}
-        <mesh position={[0.085, 0.075, -0.017]} rotation={[0, Math.PI, 0]}>
-          <circleGeometry args={[0.022, 24]} />
-          <meshBasicMaterial color={PALETTE.amber.hex} toneMapped={false} />
+        <mesh material={m.flash} rotation={[0, Math.PI, 0]} position={[-0.085, 0.085, -0.0115]}>
+          <circleGeometry args={[0.026, 32]} />
+        </mesh>
+        <mesh material={m.port} rotation={[0, Math.PI, 0]} position={[-0.085, -0.085, -0.0115]}>
+          <circleGeometry args={[0.009, 20]} />
         </mesh>
       </group>
 
-      {/* side buttons */}
-      <mesh position={[BODY_W / 2 + 0.004, 0.3, 0]}>
-        <boxGeometry args={[0.012, 0.26, 0.036]} />
-        <meshBasicMaterial color={PALETTE.cobalt.hex} toneMapped={false} />
-      </mesh>
-      {[0.42, 0.25, 0.08].map((y, i) => (
-        <mesh key={y} position={[-BODY_W / 2 - 0.004, y, 0]}>
-          <boxGeometry args={[0.012, i === 0 ? 0.08 : 0.14, 0.036]} />
-          <meshBasicMaterial color={PALETTE.cobalt.hex} toneMapped={false} />
-        </mesh>
+      {/* side buttons: action + volume (left), side button (right) */}
+      {[
+        { x: -1, y: 0.42, h: 0.08 },
+        { x: -1, y: 0.26, h: 0.14 },
+        { x: -1, y: 0.08, h: 0.14 },
+        { x: 1, y: 0.3, h: 0.24 },
+      ].map((b) => (
+        <RoundedBox
+          key={`${b.x}${b.y}`}
+          args={[0.016, b.h, 0.03]}
+          radius={0.006}
+          smoothness={3}
+          material={m.frame}
+          position={[b.x * (BODY_W / 2 + 0.002), b.y, 0]}
+        />
       ))}
+
+      {/* USB-C port on the bottom edge */}
+      <RoundedBox args={[0.1, 0.01, 0.032]} radius={0.0045} smoothness={3} material={m.port} position={[0, -BODY_H / 2 + 0.002, 0]} />
     </group>
+  );
+}
+
+/** A studio built from light cards: a long key strip, a top softbox, warm fills echoing the oil. */
+function Studio() {
+  return (
+    <Environment resolution={256} frames={1}>
+      {/* a dim grey room, so the metal never reflects pure black */}
+      <color attach="background" args={["#4a4a52"]} />
+      <Lightformer form="rect" intensity={3} position={[-4, 2, 4]} rotation={[0, -Math.PI / 4, 0]} scale={[1.2, 10, 1]} />
+      <Lightformer form="rect" intensity={1.6} position={[0, 6, 2]} rotation={[Math.PI / 2, 0, 0]} scale={[8, 4, 1]} />
+      <Lightformer form="rect" intensity={1.4} color={PALETTE.amber.hex} position={[5, 0, 2]} rotation={[0, Math.PI / 2.4, 0]} scale={[2, 8, 1]} />
+      <Lightformer form="rect" intensity={0.9} color={PALETTE["signal-red"].hex} position={[3, -4, -3]} rotation={[0, Math.PI, 0]} scale={[6, 3, 1]} />
+      <Lightformer form="rect" intensity={1.2} color={PALETTE.cream.hex} position={[-3, 1, -5]} rotation={[0, Math.PI, 0]} scale={[4, 8, 1]} />
+    </Environment>
   );
 }
 
 type Props = {
   /** Still-capture mode: render the first pose once, keep the drawing buffer. */
   frozen?: boolean;
-  /** False when off-screen or the tab is hidden: the clock stops. */
+  /** False when off-screen or the tab is hidden: the render loop stops. */
   running?: boolean;
   pointer: React.RefObject<{ x: number; y: number } | null>;
   onShowing?: (index: number) => void;
@@ -276,14 +279,18 @@ export default function PhoneCanvas({ frozen = false, running = true, pointer, o
   return (
     <Canvas
       aria-hidden="true"
-      frameloop="demand"
+      frameloop={frozen ? "demand" : running ? "always" : "never"}
       dpr={[1, 2]}
-      flat
-      camera={{ fov: 28, position: [0, 0, 4.2], near: 0.1, far: 20 }}
+      camera={{ fov: 26, position: [0, 0, 4.4], near: 0.1, far: 20 }}
       gl={{ antialias: true, alpha: true, preserveDrawingBuffer: frozen, powerPreference: "low-power" }}
+      onCreated={({ gl }) => {
+        gl.toneMapping = THREE.NeutralToneMapping;
+        gl.toneMappingExposure = 1.05;
+      }}
       style={{ position: "absolute", inset: 0 }}
     >
-      <Phone frozen={frozen} running={running} pointer={pointer} onShowing={stableShowing} onReady={stableReady} />
+      <Studio />
+      <Phone frozen={frozen} pointer={pointer} onShowing={stableShowing} onReady={stableReady} />
     </Canvas>
   );
 }
